@@ -176,7 +176,15 @@
   body.layout-date .time { font-size: 40vh; }
   body.layout-date .fulldate { font-size: 8vh; margin-top: 2vh; color: var(--fg); }
 
-  .rain { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  /* Focus layout: day and clock fill the screen, date sits in the footer */
+  body.layout-focus .dock { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: table; -webkit-transform: none; transform: none; padding: 0 16px; box-sizing: border-box; }
+  body.layout-focus .clock { display: table-cell; width: 100%; padding: 0; margin: 0; vertical-align: middle; }
+  body.layout-focus .cal { display: none; }
+  body.layout-focus .dayname { position: absolute; left: 0; right: 0; top: 6vh; margin: 0; font-size: 6vh; letter-spacing: 0.3em; }
+  body.layout-focus .ampm { margin-left: 0.6em; }
+  body.layout-focus .time { font-size: 50vh; }
+  body.layout-focus .fulldate { position: absolute; left: 0; right: 0; bottom: 6vh; margin: 0; font-size: 5vh; letter-spacing: 0.12em; color: var(--mute); }
+
 
   /* Desk mode: green phosphor terminal look. Monospace is wider, so the clock is sized smaller. */
   body.desk {
@@ -188,12 +196,18 @@
     --font-display: "Share Tech Mono", Menlo, "Courier New", monospace;
     --font-body: "Share Tech Mono", Menlo, "Courier New", monospace;
   }
+  body.desk {
+    background: #000a03;
+    background-image: -webkit-radial-gradient(50% 42%, ellipse farthest-corner, #052a12 0%, #031608 38%, #010a04 70%, #000000 100%);
+    background-image: radial-gradient(ellipse farthest-corner at 50% 42%, #052a12 0%, #031608 38%, #010a04 70%, #000000 100%);
+  }
   body.desk .time { font-weight: 400; font-size: 12vw; letter-spacing: 0; text-shadow: 0 0 0.14em rgba(61, 255, 114, 0.55); }
   body.desk .dayname { font-weight: 400; letter-spacing: 0.3em; text-shadow: 0 0 0.6em rgba(200, 255, 214, 0.5); }
   body.desk .ampm, body.desk .month, body.desk .today span, body.desk .menu button { font-weight: 400; }
   body.desk .today span { border-radius: 0.15em; }
   body.desk .fulldate { text-shadow: 0 0 0.5em rgba(61, 255, 114, 0.35); }
   body.desk.layout-date .time { font-size: 26vh; }
+  body.desk.layout-focus .time { font-size: 34vh; }
 
   @media (orientation: portrait) {
     .dock { display: block; height: auto; position: absolute; left: 0; right: 0; top: 50%; -webkit-transform: translateY(-50%); transform: translateY(-50%); padding: 0 16px; box-sizing: border-box; }
@@ -211,11 +225,14 @@
     body.layout-date .fulldate { font-size: 7vw; margin-top: 3vw; }
     body.desk .time { font-size: 20vw; }
     body.desk.layout-date .time { font-size: 22vw; }
+    body.layout-focus .dayname { font-size: 4.5vw; top: 6vw; }
+    body.layout-focus .time { font-size: 35vw; }
+    body.layout-focus .fulldate { font-size: 5vw; bottom: 6vw; }
+    body.desk.layout-focus .time { font-size: 25vw; }
   }
 </style>
 </head>
 <body>
-<canvas class="rain" id="rain" hidden></canvas>
 <div class="dock" id="dock">
   <div class="clock">
     <div class="dayname" id="dayname">&nbsp;</div>
@@ -288,9 +305,7 @@
     setText("dayname", DAYS[d.getDay()]);
     setText("fulldate", d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear());
     drawCalendar(d);
-    if (d.getMinutes() !== lastRainMin) { lastRainMin = d.getMinutes(); drawRain(); }
   }
-  var lastRainMin = -1;
 
   var timer = null;
   function schedule() {
@@ -311,78 +326,22 @@
   function store(key, val) { try { window.localStorage.setItem(key, val); } catch (e) {} }
   function load(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } }
   var body = document.body;
-  var dateOnly = load("dockLayout") === "date";
+  var layout = load("dockLayout");
+  if (layout !== "date" && layout !== "focus") { layout = "cal"; }
+  var LAYOUT_LABEL = { cal: "Calendar", date: "Date only", focus: "Focus" };
+  var LAYOUT_NEXT = { cal: "date", date: "focus", focus: "cal" };
   var mode = load("dockMode");
   if (mode !== "night" && mode !== "desk" && mode !== "normal") { mode = load("dockNight") === "1" ? "night" : "normal"; }
   var MODE_LABEL = { normal: "Normal", night: "Night", desk: "Desk" };
   var MODE_NEXT = { normal: "night", night: "desk", desk: "normal" };
 
-  // Desk mode backdrop: a field of green glyphs, drawn once a minute. It is not animated, so it costs almost no battery.
-  var rain = $("rain");
-  var rctx = rain.getContext ? rain.getContext("2d") : null;
-  var GLYPHS = [], gi;
-  for (gi = 0xFF66; gi <= 0xFF9D; gi++) { GLYPHS.push(String.fromCharCode(gi)); }
-  "0123456789:.=*+-<>|".split("").forEach(function (c) { GLYPHS.push(c); });
-
-  function drawRain() {
-    if (mode !== "desk" || !rctx) { return; }
-    var w = window.innerWidth, h = window.innerHeight;
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var pw = Math.round(w * dpr), ph = Math.round(h * dpr);
-    if (rain.width !== pw || rain.height !== ph) { rain.width = pw; rain.height = ph; }
-    rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    rctx.clearRect(0, 0, w, h);
-    var fs = Math.max(13, Math.round(Math.min(w, h) * 0.032));
-    rctx.font = fs + 'px "Share Tech Mono", Menlo, "Hiragino Kaku Gothic ProN", monospace';
-    rctx.textAlign = "center";
-    rctx.textBaseline = "middle";
-    var cols = Math.floor(w / fs), rows = Math.ceil(h / fs), c, k, len, head, row, a, x, y, f;
-    // Keep the backdrop faint behind text so numbers stay easy to read
-    var keep = [], pad = fs * 0.6;
-    function addRect(el) {
-      if (!el) { return; }
-      var b = el.getBoundingClientRect();
-      if (b.width > 0 && b.height > 0) { keep.push([b.left - pad, b.top - pad, b.right + pad, b.bottom + pad]); }
-    }
-    addRect($("dayname")); addRect($("time")); addRect($("fulldate")); addRect(document.querySelector(".cal"));
-    function covered(px, py) {
-      for (var i = 0; i < keep.length; i++) {
-        var r = keep[i];
-        if (px >= r[0] && px <= r[2] && py >= r[1] && py <= r[3]) { return true; }
-      }
-      return false;
-    }
-    for (c = 0; c < cols; c++) {
-      if (Math.random() > 0.42) { continue; }
-      len = 5 + Math.floor(Math.random() * 12);
-      head = Math.floor(Math.random() * rows) + 3;
-      for (k = 0; k < len; k++) {
-        row = head - k;
-        if (row < 0 || row >= rows) { continue; }
-        x = c * fs + fs / 2; y = row * fs + fs / 2;
-        f = covered(x, y) ? 0.25 : 1;
-        a = (k === 0 ? 0.55 : 0.34 * (1 - k / len) + 0.04) * f;
-        rctx.fillStyle = k === 0 ? "rgba(190,255,205," + a + ")" : "rgba(61,255,114," + a + ")";
-        rctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, y);
-      }
-    }
-  }
-  var resizeTimer = null;
-  function onResize() { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawRain, 300); }
-  window.addEventListener("resize", onResize, false);
-  window.addEventListener("orientationchange", onResize, false);
-  if (document.fonts && document.fonts.load) {
-    document.fonts.load('16px "Share Tech Mono"').then(drawRain, function () {});
-  }
-
   function applySettings() {
-    if (dateOnly) { body.classList.add("layout-date"); } else { body.classList.remove("layout-date"); }
+    if (layout === "date") { body.classList.add("layout-date"); } else { body.classList.remove("layout-date"); }
+    if (layout === "focus") { body.classList.add("layout-focus"); } else { body.classList.remove("layout-focus"); }
     if (mode === "night") { body.classList.add("dim"); } else { body.classList.remove("dim"); }
     if (mode === "desk") { body.classList.add("desk"); } else { body.classList.remove("desk"); }
-    rain.hidden = mode !== "desk" || !rctx;
-    if (mode === "desk") { drawRain(); } else { rain.width = 1; rain.height = 1; }
     $("b-time").textContent = "Clock: " + (use24 ? "24 hour" : "12 hour");
-    $("b-layout").textContent = "Layout: " + (dateOnly ? "Date only" : "Calendar");
+    $("b-layout").textContent = "Layout: " + LAYOUT_LABEL[layout];
     $("b-mode").textContent = "Mode: " + MODE_LABEL[mode];
   }
 
@@ -405,7 +364,7 @@
     };
   }
   $("b-time").addEventListener("click", press(function () { use24 = !use24; store("dock24", use24 ? "1" : "0"); }), false);
-  $("b-layout").addEventListener("click", press(function () { dateOnly = !dateOnly; store("dockLayout", dateOnly ? "date" : "cal"); }), false);
+  $("b-layout").addEventListener("click", press(function () { layout = LAYOUT_NEXT[layout]; store("dockLayout", layout); }), false);
   $("b-mode").addEventListener("click", press(function () { mode = MODE_NEXT[mode]; store("dockMode", mode); }), false);
   $("dock").addEventListener("click", function () {
     if ($("menu").hidden) { showMenu(); } else { hideMenu(); }

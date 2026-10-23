@@ -19,8 +19,8 @@ To stop stray taps, open Settings, Accessibility, Guided Access and turn it on. 
 Tap the screen to show a small settings bar. It hides itself after a few seconds, or when you tap the screen again.
 
 - **Clock:** 12 hour or 24 hour.
-- **Layout:** Calendar (clock plus month calendar) or Date only (a large clock with the day, date and year).
-- **Mode:** Normal, Night (dim red text on black) or Desk (green terminal look with a Matrix-style glyph backdrop). Tap the Mode button to cycle through them.
+- **Layout:** Calendar (clock plus month calendar), Date only (a large clock with the day, date and year) or Focus (the day and clock fill the screen, with the date small in the footer). Tap the Layout button to cycle through them.
+- **Mode:** Normal, Night (dim red text on black) or Desk (green terminal look on a dark green gradient). Tap the Mode button to cycle through them.
 
 The iPad remembers your choices.
 
@@ -41,7 +41,7 @@ The screen uses far more power than the page does, so these settings matter more
 - Lower the brightness in Control Center, and turn on Auto-Brightness in Settings, Display & Brightness.
 - Turn off Bluetooth and Background App Refresh if you don't use them.
 - Airplane Mode saves more power, but the iPad then can't correct its clock until you go back online.
-- Desk mode draws its glyph backdrop once a minute and does not animate it, so it costs almost no extra power.
+- Desk mode is only a static colour gradient, so it costs no extra power.
 - Dark colours save power only on OLED screens. Old iPads have LCD screens, so brightness is what counts.
 
 ## Compatibility
