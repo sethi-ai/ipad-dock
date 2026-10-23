@@ -180,9 +180,13 @@
   body.layout-focus .dock { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: table; -webkit-transform: none; transform: none; padding: 0 16px; box-sizing: border-box; }
   body.layout-focus .clock { display: table-cell; width: 100%; padding: 0; margin: 0; vertical-align: middle; }
   body.layout-focus .cal { display: none; }
-  body.layout-focus .dayname { position: absolute; left: 0; right: 0; top: 6vh; margin: 0; font-size: 6vh; letter-spacing: 0.3em; }
+  .headline { display: none; }
+  body.layout-focus .headline { display: block; position: absolute; left: 0; right: 0; top: 5vh; font-size: 7vh; font-weight: 600; letter-spacing: 0.06em; color: var(--accent); white-space: nowrap; }
+  body.layout-focus .dayname, body.layout-focus .fulldate { display: none; }
+  body.desk .headline { font-weight: 400; text-shadow: 0 0 0.6em rgba(200, 255, 214, 0.5); }
   body.layout-focus .ampm { margin-left: 0.6em; }
   body.layout-focus .time { font-size: 50vh; }
+  body.h24.layout-focus .time { font-size: 58vh; }
   body.layout-focus .fulldate { position: absolute; left: 0; right: 0; bottom: 6vh; margin: 0; font-size: 5vh; letter-spacing: 0.12em; color: var(--mute); }
 
 
@@ -208,6 +212,7 @@
   body.desk .fulldate { text-shadow: 0 0 0.5em rgba(61, 255, 114, 0.35); }
   body.desk.layout-date .time { font-size: 26vh; }
   body.desk.layout-focus .time { font-size: 34vh; }
+  body.desk.h24.layout-focus .time { font-size: 40vh; }
 
   @media (orientation: portrait) {
     .dock { display: block; height: auto; position: absolute; left: 0; right: 0; top: 50%; -webkit-transform: translateY(-50%); transform: translateY(-50%); padding: 0 16px; box-sizing: border-box; }
@@ -225,19 +230,46 @@
     body.layout-date .fulldate { font-size: 7vw; margin-top: 3vw; }
     body.desk .time { font-size: 20vw; }
     body.desk.layout-date .time { font-size: 22vw; }
-    body.layout-focus .dayname { font-size: 4.5vw; top: 6vw; }
+    body.layout-focus .headline { font-size: 5.6vw; top: 6vw; }
     body.layout-focus .time { font-size: 35vw; }
+    body.h24.layout-focus .time { font-size: 41vw; }
     body.layout-focus .fulldate { font-size: 5vw; bottom: 6vw; }
     body.desk.layout-focus .time { font-size: 25vw; }
+    body.desk.h24.layout-focus .time { font-size: 29vw; }
+  }
+
+  /* Countdown line: shows days (or hours on the last day) to a chosen date. Hidden until a date is saved. */
+  .cdline { display: none; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; }
+  body.has-count .cdline { display: block; }
+  body.layout-cal.has-count .cdline, body.layout-date.has-count .cdline { margin-top: 2.4vw; font-size: 3vw; }
+  body.layout-date.has-count .cdline { margin-top: 2vh; font-size: 5vh; }
+  body.layout-focus.has-count .cdline { position: absolute; left: 0; right: 0; bottom: 6vh; margin: 0; font-size: 6.4vh; }
+  body.desk .cdline { font-weight: 400; text-shadow: 0 0 0.5em rgba(61, 255, 114, 0.45); }
+
+  .panel { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 5; background: rgba(0, 0, 0, 0.9); text-align: center; overflow: auto; }
+  .box { display: inline-block; box-sizing: border-box; width: 86%; max-width: 440px; margin-top: 5vh; padding: 22px; text-align: left; background: var(--bg); border: 1px solid var(--mute); border-radius: 18px; font-family: var(--font-body); color: var(--fg); }
+  .box .ptitle { font-size: 22px; font-weight: 600; margin-bottom: 14px; color: var(--accent); }
+  .box label { display: block; font-size: 15px; color: var(--mute); margin: 12px 0 6px; letter-spacing: 0.06em; }
+  .box input { display: block; box-sizing: border-box; width: 100%; font-family: var(--font-body); font-size: 20px; padding: 10px 12px; color: var(--fg); background: #111; border: 1px solid var(--mute); border-radius: 10px; -webkit-appearance: none; appearance: none; }
+  .box .prow { margin-top: 20px; text-align: right; }
+  .box button { font-family: var(--font-body); font-weight: 600; font-size: 18px; color: var(--fg); background: var(--bg); border: 1px solid var(--mute); border-radius: 999px; padding: 10px 20px; margin-left: 8px; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .box button.go { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  @media (orientation: portrait) {
+    body.layout-cal.has-count .cdline, body.layout-date.has-count .cdline { font-size: 4.6vw; margin-top: 3vw; }
+    body.layout-focus.has-count .cdline { font-size: 5.6vw; bottom: 6vw; }
+    .box { margin-top: 8vh; }
   }
 </style>
 </head>
 <body>
 <div class="dock" id="dock">
   <div class="clock">
+    <div class="headline" id="headline">&nbsp;</div>
     <div class="dayname" id="dayname">&nbsp;</div>
     <div class="time"><span id="time">--:--</span><span class="ampm" id="ampm"></span></div>
     <div class="fulldate" id="fulldate">&nbsp;</div>
+    <div class="cdline" id="cdline"></div>
   </div>
   <div class="cal">
     <div class="month"><span id="monthname">&nbsp;</span><small id="year"></small></div>
@@ -247,7 +279,18 @@
 <div class="menu" id="menu" hidden>
   <button type="button" id="b-time"></button>
   <button type="button" id="b-layout"></button>
+  <button type="button" id="b-count">Countdown</button>
   <button type="button" id="b-mode"></button>
+</div>
+<div class="panel" id="panel" hidden>
+  <div class="box">
+    <div class="ptitle">Countdown</div>
+    <label for="in-label">Name (up to 20 letters)</label>
+    <input id="in-label" type="text" maxlength="20" placeholder="Diwali" autocomplete="off" autocorrect="off">
+    <label for="in-date">Date</label>
+    <input id="in-date" type="date">
+    <div class="prow"><button type="button" id="p-clear">Clear</button><button type="button" id="p-close">Close</button><button type="button" class="go" id="p-save">Save</button></div>
+  </div>
 </div>
 <div class="hint" id="hint">Tap the screen for settings</div>
 
@@ -283,6 +326,29 @@
     $("grid").innerHTML = html;
   }
 
+  // Countdown: days between today and a saved date. Names are written with textContent only.
+  var cdDate = "", cdLabel = "";
+  function daysLeft(d) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cdDate)) { return null; }
+    var q = cdDate.split("-");
+    return Math.round((Date.UTC(+q[0], +q[1] - 1, +q[2]) - Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  }
+  function drawCount(d) {
+    var n = daysLeft(d), txt = "", name = cdLabel;
+    if (n !== null) {
+      if (n >= 2) { txt = n + " days to " + (name || "go"); }
+      else if (n === 1) {
+        var m = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - d.getTime();
+        var hrs = Math.max(1, Math.ceil(m / 3600000));
+        txt = hrs + (hrs === 1 ? " hour to " : " hours to ") + (name || "go");
+      }
+      else if (n === 0) { txt = name ? "Today: " + name : "Today"; }
+      else { txt = (-n) + (n === -1 ? " day since " : " days since ") + (name || "then"); }
+    }
+    setText("cdline", txt);
+    if (txt) { document.body.classList.add("has-count"); } else { document.body.classList.remove("has-count"); }
+  }
+
   // Battery: the screen updates once a minute, only when a value changed.
   var shown = {};
   function setText(id, val) {
@@ -303,8 +369,10 @@
     setText("time", h + ":" + pad(d.getMinutes()));
     setText("ampm", suffix);
     setText("dayname", DAYS[d.getDay()]);
+    setText("headline", DAYS[d.getDay()] + ", " + d.getDate() + " " + MONTHS[d.getMonth()].slice(0, 3) + " " + String(d.getFullYear()).slice(2));
     setText("fulldate", d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear());
     drawCalendar(d);
+    drawCount(d);
   }
 
   var timer = null;
@@ -330,6 +398,8 @@
   if (layout !== "date" && layout !== "focus") { layout = "cal"; }
   var LAYOUT_LABEL = { cal: "Calendar", date: "Date only", focus: "Focus" };
   var LAYOUT_NEXT = { cal: "date", date: "focus", focus: "cal" };
+  cdDate = load("dockCdDate") || "";
+  cdLabel = load("dockCdLabel") || "";
   var mode = load("dockMode");
   if (mode !== "night" && mode !== "desk" && mode !== "normal") { mode = load("dockNight") === "1" ? "night" : "normal"; }
   var MODE_LABEL = { normal: "Normal", night: "Night", desk: "Desk" };
@@ -338,6 +408,8 @@
   function applySettings() {
     if (layout === "date") { body.classList.add("layout-date"); } else { body.classList.remove("layout-date"); }
     if (layout === "focus") { body.classList.add("layout-focus"); } else { body.classList.remove("layout-focus"); }
+    if (use24) { body.classList.add("h24"); } else { body.classList.remove("h24"); }
+    if (layout === "cal") { body.classList.add("layout-cal"); } else { body.classList.remove("layout-cal"); }
     if (mode === "night") { body.classList.add("dim"); } else { body.classList.remove("dim"); }
     if (mode === "desk") { body.classList.add("desk"); } else { body.classList.remove("desk"); }
     $("b-time").textContent = "Clock: " + (use24 ? "24 hour" : "12 hour");
@@ -352,7 +424,7 @@
     if (h && h.parentNode) { h.parentNode.removeChild(h); }
     $("menu").hidden = false;
     clearTimeout(menuTimer);
-    menuTimer = setTimeout(hideMenu, 6000);
+    menuTimer = setTimeout(function () { if ($("panel").hidden) { hideMenu(); } }, 6000);
   }
   function press(change) {
     return function (e) {
@@ -366,10 +438,35 @@
   $("b-time").addEventListener("click", press(function () { use24 = !use24; store("dock24", use24 ? "1" : "0"); }), false);
   $("b-layout").addEventListener("click", press(function () { layout = LAYOUT_NEXT[layout]; store("dockLayout", layout); }), false);
   $("b-mode").addEventListener("click", press(function () { mode = MODE_NEXT[mode]; store("dockMode", mode); }), false);
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  $("b-count").addEventListener("click", function (e) {
+    e.stopPropagation();
+    $("in-label").value = cdLabel;
+    var now = new Date();
+    $("in-date").min = now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate());
+    $("in-date").value = cdDate;
+    hideMenu();
+    $("panel").hidden = false;
+  }, false);
+  function closePanel() { $("panel").hidden = true; }
+  $("p-close").addEventListener("click", closePanel, false);
+  $("p-clear").addEventListener("click", function () {
+    cdDate = ""; cdLabel = ""; store("dockCdDate", ""); store("dockCdLabel", "");
+    closePanel(); applySettings(); tick();
+  }, false);
+  $("p-save").addEventListener("click", function () {
+    var v = $("in-date").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { $("in-date").focus(); return; }
+    cdDate = v;
+    cdLabel = $("in-label").value.replace(/^\s+|\s+$/g, "").slice(0, 20);
+    store("dockCdDate", cdDate); store("dockCdLabel", cdLabel);
+    closePanel(); applySettings(); tick();
+  }, false);
   $("dock").addEventListener("click", function () {
     if ($("menu").hidden) { showMenu(); } else { hideMenu(); }
   }, false);
   applySettings();
+  tick();
 
   setTimeout(function () { var h = $("hint"); if (h && h.parentNode) { h.parentNode.removeChild(h); } }, 8000);
   document.addEventListener("touchmove", function (e) { e.preventDefault(); }, false);
