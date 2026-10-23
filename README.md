@@ -19,8 +19,8 @@ To stop stray taps, open Settings, Accessibility, Guided Access and turn it on. 
 Tap the screen to show a small settings bar. It hides itself after a few seconds, or when you tap the screen again.
 
 - **Clock:** 12 hour or 24 hour.
-- **Layout:** Calendar (clock plus month calendar), Date only (a large clock with the day, date and year) or Focus (a one-line date on top, a very large clock, and the countdown in the footer). Tap the Layout button to cycle through them.
-- **Countdown:** press Countdown, then enter a name and a date. The footer shows the days left (or the hours on the last day) and the event name.
+- **Layout:** Calendar (clock plus month calendar), Date only (a large clock with the day, date and year) or Focus (a one-line date on top, a very large clock, and the countdown in the footer), Clock only (just the big clock), Flip clock (two flip-style cards) or Stacked clock (hours above minutes, in tall bold digits). Tap the Layout button to cycle through them.
+- **Countdown:** press Countdown, then enter a name and a date. The footer reads like "Diwali - 16 Days to go", and switches to hours on the last day.
 - **Mode:** Normal, Night (dim red text on black) or Desk (green terminal look on a dark green gradient). Tap the Mode button to cycle through them.
 
 The iPad remembers your choices.
