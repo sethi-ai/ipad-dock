@@ -1,9 +1,14 @@
-/* Offline cache for iPad Dock. Bump CACHE when any file changes so devices pick up the update. */
-var CACHE = "ipad-dock-v1";
+/* Offline cache for iPad Dock.
+   Online: always fetch the newest files and refresh the saved copy.
+   Offline: serve the saved copy. Bump CACHE only if you rename or add files. */
+var CACHE = "ipad-dock-v3";
 var FILES = [
   "./",
   "index.html",
   "manifest.webmanifest",
+  "icon-120.png",
+  "icon-152.png",
+  "icon-167.png",
   "icon-180.png",
   "icon-512.png"
 ];
@@ -28,10 +33,15 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") { return; }
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(function (hit) {
-      if (hit) { return hit; }
-      return fetch(event.request).catch(function () {
-        return caches.match("index.html");
+    fetch(event.request).then(function (response) {
+      if (response && response.status === 200 && response.type === "basic") {
+        var copy = response.clone();
+        caches.open(CACHE).then(function (cache) { cache.put(event.request, copy); });
+      }
+      return response;
+    }).catch(function () {
+      return caches.match(event.request, { ignoreSearch: true }).then(function (hit) {
+        return hit || caches.match("index.html");
       });
     })
   );

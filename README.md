@@ -50,7 +50,7 @@ Written in plain HTML, CSS and ES5 JavaScript so it runs on the Safari that ship
 
 ## Change it
 
-Everything is in `index.html`: colours are at the top of the style block, and the layout and script follow. If you edit any file, change the `CACHE` name in `sw.js` (for example `ipad-dock-v2`) so iPads that already saved the page pick up your changes.
+Everything is in `index.html`: colours are at the top of the style block, and the layout and script follow. When an iPad is online, Dock fetches the newest files each time you open it and refreshes its saved copy, so edits reach it on their own. If you add or rename files, list them in `sw.js` and change the `CACHE` name there.
 
 ## Credits and licence
 

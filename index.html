@@ -11,6 +11,11 @@
 <meta name="theme-color" content="#050506">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   /* Fonts are embedded so the page needs no network. Barlow, Barlow Condensed and Share Tech Mono: SIL Open Font License 1.1, see licenses/. */
@@ -62,13 +67,19 @@
     position: relative;
     z-index: 1;
     height: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 4vmin;
-    align-items: center;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
   }
-  .clock, .cal { min-width: 0; }
-  .clock { text-align: center; }
+  .clock, .cal {
+    display: table-cell;
+    vertical-align: middle;
+    width: 50%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .clock { text-align: center; padding-right: 2vmin; }
+  .cal { padding-left: 2vmin; }
 
   .dayname {
     font-weight: 600;
@@ -86,33 +97,39 @@
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    position: relative;
+    display: inline-block;
   }
   .ampm {
+    position: absolute;
+    left: 100%;
+    bottom: 0.1em;
     font-family: var(--font-body);
     font-weight: 600;
     font-size: 0.17em;
     letter-spacing: 0.1em;
     color: var(--mute);
-    margin-left: 0.25em;
+    margin-left: 1.4em;
+    line-height: 1;
   }
   .fulldate { font-size: 3vw; color: var(--mute); margin-top: 2.4vw; letter-spacing: 0.04em; }
 
   .cal { font-size: 3.4vmin; }
   .month {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    overflow: hidden;
     font-weight: 600;
     font-size: 1.3em;
     margin-bottom: 0.6em;
   }
-  .month small { font-size: 0.7em; color: var(--mute); font-weight: 400; letter-spacing: 0.1em; }
+  .month small { float: right; margin-top: 0.3em; font-size: 0.7em; color: var(--mute); font-weight: 400; letter-spacing: 0.1em; }
   .grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-row-gap: 0.15em;
+    overflow: hidden;
   }
   .d {
+    float: left;
+    width: 14.28%;
+    box-sizing: border-box;
+    margin-bottom: 0.15em;
     text-align: center;
     line-height: 1.9em;
     font-variant-numeric: tabular-nums;
@@ -137,12 +154,7 @@
     position: fixed;
     z-index: 3;
     left: 0; right: 0; bottom: 4vmin;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-wrap: wrap;
-    flex-wrap: wrap;
-    -webkit-justify-content: center;
-    justify-content: center;
+    text-align: center;
     padding: 0 16px;
   }
   .menu button {
@@ -161,7 +173,7 @@
   }
 
   /* Date-only layout: clock plus day, date and year */
-  body.layout-date .dock { grid-template-columns: 1fr; }
+  body.layout-date .clock { padding: 0; width: 100%; }
   body.layout-date .cal { display: none; }
   body.layout-date .dayname { font-size: 5vh; margin-bottom: 1.5vh; }
   body.layout-date .time { font-size: 40vh; }
@@ -176,8 +188,8 @@
     --mute: #1d8f40;
     --accent: #c8ffd6;
     --accent-ink: #00140a;
-    --font-display: "Share Tech Mono", "Courier New", Menlo, monospace;
-    --font-body: "Share Tech Mono", "Courier New", Menlo, monospace;
+    --font-display: "Share Tech Mono", Menlo, "Courier New", monospace;
+    --font-body: "Share Tech Mono", Menlo, "Courier New", monospace;
   }
   body.desk .time { font-weight: 400; font-size: 12vw; letter-spacing: 0; text-shadow: 0 0 0.14em rgba(61, 255, 114, 0.55); }
   body.desk .dayname { font-weight: 400; letter-spacing: 0.3em; text-shadow: 0 0 0.6em rgba(200, 255, 214, 0.5); }
@@ -187,7 +199,10 @@
   body.desk.layout-date .time { font-size: 26vh; }
 
   @media (orientation: portrait) {
-    .dock { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; grid-gap: 7vw; }
+    .dock { display: block; height: auto; position: absolute; left: 0; right: 0; top: 50%; -webkit-transform: translateY(-50%); transform: translateY(-50%); padding: 0 16px; box-sizing: border-box; }
+    .clock, .cal { display: block; width: 100%; padding: 0; }
+    .clock { margin-bottom: 7vw; }
+    body.layout-date .clock { margin-bottom: 0; }
     .dayname { font-size: 4.2vw; }
     .time { font-size: 30vw; }
     .fulldate { font-size: 4.2vw; }
